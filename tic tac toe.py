@@ -157,7 +157,6 @@ class TicTacToe:
             
 
     def run(self):
-        clock = pygame.time.Clock() 
         while self.running:
             self.events()
             self.afficher()
@@ -183,6 +182,6 @@ class TicTacToe:
                 
         pygame.quit()
 
-if __name__ == "__main__":
-    jeu = TicTacToe()
-    jeu.run()
+
+jeu = TicTacToe()
+jeu.run()
