@@ -17,6 +17,18 @@ class TicTacToe:
 
         self.cercle = pygame.image.load("cercle.png")
         self.cercle = pygame.transform.scale(self.cercle, (150, 150))
+        
+        self.barre_hori = pygame.image.load("barre_hori.png")
+        self.barre_hori = pygame.transform.scale(self.barre_hori, (474, 200))
+        
+        self.barre_verti = pygame.image.load("barre_verti.png")
+        self.barre_verti = pygame.transform.scale(self.barre_verti, (200, 474))
+        
+        self.barre_diag_droite = pygame.image.load("barre_diag_droite.png")
+        self.barre_diag_droite = pygame.transform.scale(self.barre_diag_droite, (474, 474))
+        
+        self.barre_diag_gauche = pygame.image.load("barre_diag_gauche.png")
+        self.barre_diag_gauche = pygame.transform.scale(self.barre_diag_gauche, (474, 474))
 
         self.cases_rect = [
             pygame.Rect(0, 154, 150, 150),
@@ -29,6 +41,21 @@ class TicTacToe:
             pygame.Rect(160, 464, 150, 150),
             pygame.Rect(320, 464, 150, 150)
         ]
+        
+        self.conditions_gagnantes = {
+            ((0, 0), (0, 1), (0, 2)): "barre1",
+            ((1, 0), (1, 1), (1, 2)): "barre2",
+            ((2, 0), (2, 1), (2, 2)): "barre3",
+            ((0, 0), (1, 0), (2, 0)): "barre4",
+            ((0, 1), (1, 1), (2, 1)): "barre5",
+            ((0, 2), (1, 2), (2, 2)): "barre6",
+            ((0, 0), (1, 1), (2, 2)): "diagonal anti slash",
+            ((0, 2), (1, 1), (2, 0)): "diagonal slash"
+        }
+        
+        self.value_barre = "vide"
+        
+        self.barre_completee_pos = None
 
         self.running = True
         self.tour = 0
@@ -42,11 +69,35 @@ class TicTacToe:
                 self.screen.blit(self.croix, (x, y))
             elif self.etat_jeu[i // 3][i % 3] == 'O':
                 self.screen.blit(self.cercle, (x, y))
+                
+        if self.barre_completee_pos is not None:
+            self.afficher_barre_completee()
 
         pygame.display.flip()
+        
+    def afficher_barre_completee(self):
+        if self.value_barre != "vide":
+            if self.value_barre == "barre1" :
+                self.screen.blit(self.barre_hori, (0, 130))
+            elif self.value_barre == "barre2" :
+                self.screen.blit(self.barre_hori, (0, 290))
+            elif self.value_barre == "barre3" :
+                self.screen.blit(self.barre_hori, (0, 440))
+            elif self.value_barre == "barre4" :
+                self.screen.blit(self.barre_verti, (-20, 150))
+            elif self.value_barre == "barre5" :
+                self.screen.blit(self.barre_verti, (140, 150))
+            elif self.value_barre == "barre6" :
+                self.screen.blit(self.barre_verti, (290, 150))
+            elif self.value_barre == "diagonal anti slash" :
+                self.screen.blit(self.barre_diag_gauche, (0, 150))
+            elif self.value_barre == "diagonal slash" :
+                self.screen.blit(self.barre_diag_droite, (0, 150))
+
     
     def afficher_resultat(self, resultat):
         phrase = "Victoire de " + resultat if resultat != "Match nul" else "Match nul"
+        
         pygame.time.wait(2000)
         self.screen.fill(self.background_colour)
         
@@ -133,21 +184,22 @@ class TicTacToe:
             return meilleur_score
 
     def check_victoire(self):
-        for i in range(3):
-            if self.etat_jeu[i][0] == self.etat_jeu[i][1] == self.etat_jeu[i][2] != '_':
-                return self.etat_jeu[i][0]
-            if self.etat_jeu[0][i] == self.etat_jeu[1][i] == self.etat_jeu[2][i] != '_':
-                return self.etat_jeu[0][i]
-
-        if self.etat_jeu[0][0] == self.etat_jeu[1][1] == self.etat_jeu[2][2] != '_':
-            return self.etat_jeu[0][0]
-        if self.etat_jeu[0][2] == self.etat_jeu[1][1] == self.etat_jeu[2][0] != '_':
-            return self.etat_jeu[0][2]
+        for positions, nom_barre in self.conditions_gagnantes.items():
+            if all(self.etat_jeu[i][j] == 'O' for i, j in positions):
+                self.value_barre = nom_barre
+                self.barre_completee_pos=(1,1)
+                return 'O'
+            elif all(self.etat_jeu[i][j] == 'X' for i, j in positions):
+                self.value_barre = nom_barre
+                self.barre_completee_pos=(1,1)
+                return 'X'
 
         if all(self.etat_jeu[i][j] != '_' for i in range(3) for j in range(3)):
             return "Match nul"
 
+        self.value_barre = "vide"
         return '_'
+
     
     def afficher_etat_jeu(self):
         for i in range(3):
@@ -159,9 +211,10 @@ class TicTacToe:
     def run(self):
         while self.running:
             self.events()
+            resultat = self.check_victoire()
             self.afficher()
 
-            resultat = self.check_victoire()
+            
             if resultat != "_":
                 if resultat == "Match nul":
                     print("Match nul")
