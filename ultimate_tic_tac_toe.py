@@ -1,12 +1,14 @@
 import pygame
 
-class TicTacToe:
+
+class UltimateTicTacToe:
     def __init__(self):
         pygame.font.init()
         self.screen = pygame.display.set_mode((474, 613))
         self.background_colour = (255, 255, 255)
         self.screen.fill(self.background_colour)
-        self.background = pygame.image.load("OIP.jpeg")
+        self.background = pygame.image.load("ultimate-tic-tac-toe.webp")
+        self.background = pygame.transform.scale(self.background, (474, 613))
         self.rect = self.background.get_rect(topleft=(0, 0))
 
         self.game_state = [['_'] * 3 for _ in range(3)]
@@ -232,8 +234,5 @@ class TicTacToe:
                 
                 self.__init__()
                 
-        pygame.quit()
-
-
-game = TicTacToe()
-game.run()
+        
+        
