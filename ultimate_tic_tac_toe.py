@@ -12,12 +12,30 @@ class UltimateTicTacToe:
         self.rect = self.background.get_rect(topleft=(0, 0))
 
         self.game_state = [['_'] * 3 for _ in range(3)]
+        
+        self.game_state_cell1 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell2 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell3 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell4 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell5 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell6 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell7 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell8 = [['_'] * 3 for _ in range(3)]
+        self.game_state_cell9 = [['_'] * 3 for _ in range(3)]
+        
+        self.game_small_boards_state = [self.game_state_cell1, self.game_state_cell2, self.game_state_cell3, self.game_state_cell4, self.game_state_cell5, self.game_state_cell6, self.game_state_cell7, self.game_state_cell8, self.game_state_cell9]
 
         self.cross = pygame.image.load("cross.png")
-        self.cross = pygame.transform.scale(self.cross, (150, 150))
+        self.cross = pygame.transform.scale(self.cross, (150, 200))
+        
+        self.small_cross = pygame.image.load("cross.png")
+        self.small_cross = pygame.transform.scale(self.small_cross, (35, 40))
 
         self.circle = pygame.image.load("circle.png")
-        self.circle = pygame.transform.scale(self.circle, (150, 150))
+        self.circle = pygame.transform.scale(self.circle, (150, 200))
+        
+        self.small_circle = pygame.image.load("circle.png")
+        self.small_circle = pygame.transform.scale(self.small_circle, (35, 40))
         
         self.horiz_bar = pygame.image.load("horiz_bar.png")
         self.horiz_bar = pygame.transform.scale(self.horiz_bar, (474, 200))
@@ -32,16 +50,126 @@ class UltimateTicTacToe:
         self.diag_left_bar = pygame.transform.scale(self.diag_left_bar, (474, 474))
 
         self.cell_rects = [
-            pygame.Rect(0, 154, 150, 150),
-            pygame.Rect(160, 154, 150, 150),
-            pygame.Rect(320, 154, 150, 150),
-            pygame.Rect(0, 309, 150, 150),
-            pygame.Rect(160, 309, 150, 150),
-            pygame.Rect(320, 309, 150, 150),
-            pygame.Rect(0, 464, 150, 150),
-            pygame.Rect(160, 464, 150, 150),
-            pygame.Rect(320, 464, 150, 150)
+            pygame.Rect(0, 0, 150, 200),
+            pygame.Rect(160, 0, 150, 200),
+            pygame.Rect(320, 0, 150, 200),
+            pygame.Rect(0, 210, 150, 200),
+            pygame.Rect(160, 210, 150, 200),
+            pygame.Rect(320, 210, 150, 200),
+            pygame.Rect(0, 413, 150, 200),
+            pygame.Rect(160, 413, 150, 200),
+            pygame.Rect(320, 413, 150, 200)
         ]
+        
+        self.cell1_rects = [
+            pygame.Rect(39, 52, 35, 55),
+            pygame.Rect(77, 52, 35, 55),
+            pygame.Rect(117, 52, 35, 55),
+            pygame.Rect(39, 102, 35, 55),
+            pygame.Rect(77, 102, 35, 55),
+            pygame.Rect(117, 102, 35, 55),
+            pygame.Rect(39, 157, 35, 55),
+            pygame.Rect(77, 157, 35, 55),
+            pygame.Rect(117, 157, 35, 55)
+        ]
+        
+        self.cell2_rects = [
+            pygame.Rect(182, 52, 35, 55),
+            pygame.Rect(220, 52, 35, 55),
+            pygame.Rect(260, 52, 35, 55),
+            pygame.Rect(182, 102, 35, 55),
+            pygame.Rect(220, 102, 35, 55),
+            pygame.Rect(260, 102, 35, 55),
+            pygame.Rect(182, 157, 35, 55),
+            pygame.Rect(220, 157, 35, 55),
+            pygame.Rect(260, 157, 35, 55)
+        ]
+        
+        self.cell3_rects = [
+            pygame.Rect(322, 52, 35, 55),
+            pygame.Rect(360, 52, 35, 55),
+            pygame.Rect(400, 52, 35, 55),
+            pygame.Rect(322, 102, 35, 55),
+            pygame.Rect(360, 102, 35, 55),
+            pygame.Rect(400, 102, 35, 55),
+            pygame.Rect(322, 157, 35, 55),
+            pygame.Rect(360, 157, 35, 55),
+            pygame.Rect(400, 157, 35, 55)
+        ]
+        
+        self.cell4_rects = [
+            pygame.Rect(39, 235, 35, 55),
+            pygame.Rect(77, 235, 35, 55),
+            pygame.Rect(117, 235, 35, 55),
+            pygame.Rect(39, 285, 35, 55),
+            pygame.Rect(77, 285, 35, 55),
+            pygame.Rect(117, 285, 35, 55),
+            pygame.Rect(39, 340, 35, 55),
+            pygame.Rect(77, 340, 35, 55),
+            pygame.Rect(117, 340, 35, 55)
+        ]
+        
+        self.cell5_rects = [
+            pygame.Rect(182, 235, 35, 55),
+            pygame.Rect(220, 235, 35, 55),
+            pygame.Rect(260, 235, 35, 55),
+            pygame.Rect(182, 285, 35, 55),
+            pygame.Rect(220, 285, 35, 55),
+            pygame.Rect(260, 285, 35, 55),
+            pygame.Rect(182, 340, 35, 55),
+            pygame.Rect(220, 340, 35, 55),
+            pygame.Rect(260, 340, 35, 55)
+        ]
+        
+        self.cell6_rects = [
+            pygame.Rect(322, 235, 35, 55),
+            pygame.Rect(360, 235, 35, 55),
+            pygame.Rect(400, 235, 35, 55),
+            pygame.Rect(322, 285, 35, 55),
+            pygame.Rect(360, 285, 35, 55),
+            pygame.Rect(400, 285, 35, 55),
+            pygame.Rect(322, 340, 35, 55),
+            pygame.Rect(360, 340, 35, 55),
+            pygame.Rect(400, 340, 35, 55)
+        ]
+        
+        self.cell7_rects = [
+            pygame.Rect(39, 422, 35, 55),
+            pygame.Rect(77, 422, 35, 55),
+            pygame.Rect(117, 422, 35, 55),
+            pygame.Rect(39, 472, 35, 55),
+            pygame.Rect(77, 472, 35, 55),
+            pygame.Rect(117, 472, 35, 55),
+            pygame.Rect(39, 527, 35, 55),
+            pygame.Rect(77, 527, 35, 55),
+            pygame.Rect(117, 527, 35, 55)
+        ]
+        
+        self.cell8_rects = [
+            pygame.Rect(182, 422, 35, 55),
+            pygame.Rect(220, 422, 35, 55),
+            pygame.Rect(260, 422, 35, 55),
+            pygame.Rect(182, 472, 35, 55),
+            pygame.Rect(220, 472, 35, 55),
+            pygame.Rect(260, 472, 35, 55),
+            pygame.Rect(182, 527, 35, 55),
+            pygame.Rect(220, 527, 35, 55),
+            pygame.Rect(260, 527, 35, 55)
+        ]
+        
+        self.cell9_rects = [
+            pygame.Rect(322, 422, 35, 55),
+            pygame.Rect(360, 422, 35, 55),
+            pygame.Rect(400, 422, 35, 55),
+            pygame.Rect(322, 472, 35, 55),
+            pygame.Rect(360, 472, 35, 55),
+            pygame.Rect(400, 472, 35, 55),
+            pygame.Rect(322, 527, 35, 55),
+            pygame.Rect(360, 527, 35, 55),
+            pygame.Rect(400, 527, 35, 55)
+        ]
+        
+        self.cells_rects = [self.cell1_rects, self.cell2_rects, self.cell3_rects, self.cell4_rects, self.cell5_rects, self.cell6_rects, self.cell7_rects, self.cell8_rects, self.cell9_rects]
         
         self.winning_conditions = {
             ((0, 0), (0, 1), (0, 2)): "horiz_bar1",
@@ -118,6 +246,7 @@ class UltimateTicTacToe:
 
     def on_mouse_down(self):
         x, y = pygame.mouse.get_pos()
+        print(x, y)
         for i, rect in enumerate(self.cell_rects):
             if rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_':
                 self.make_move(i)
@@ -130,7 +259,6 @@ class UltimateTicTacToe:
         self.turn = (self.turn + 1) % 2
         self.display_game_state()
         
-
     def make_computer_move(self):
         best_score = float('-inf')
         best_action = None
@@ -148,7 +276,6 @@ class UltimateTicTacToe:
         if best_action is not None:
             self.make_move(best_action)
 
-
     def evaluate(self):
         result = self.check_victory()
         if result == 'X':
@@ -160,7 +287,6 @@ class UltimateTicTacToe:
         else:
             return None
 
-    
     def minimax(self, is_maximizing):
         score = self.evaluate()
 
@@ -201,14 +327,25 @@ class UltimateTicTacToe:
         self.winning_bar = "empty"
         return '_'
 
-    
+    def check_victory_small_board(self, small_board):
+        for positions in self.winning_conditions.items():
+            if all(small_board[i][j] == 'O' for i, j in positions):
+                return 'O'
+            elif all(small_board[i][j] == 'X' for i, j in positions):
+                return 'X'
+
+        if all(small_board[i][j] != '_' for i in range(3) for j in range(3)):
+            return "Draw"
+
+        self.winning_bar = "empty"
+        return '_'
+
     def display_game_state(self):
         for i in range(3):
             print(self.game_state[i])
             
         print()
-            
-
+        
     def run(self):
         while self.running:
             self.events()
@@ -235,4 +372,5 @@ class UltimateTicTacToe:
                 self.__init__()
                 
         
-        
+game = UltimateTicTacToe()
+game.run()
