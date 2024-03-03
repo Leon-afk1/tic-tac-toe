@@ -28,26 +28,26 @@ class UltimateTicTacToe:
         self.cross = pygame.image.load("cross.png")
         self.cross = pygame.transform.scale(self.cross, (150, 200))
         
-        self.small_cross = pygame.image.load("cross.png")
-        self.small_cross = pygame.transform.scale(self.small_cross, (35, 40))
+        self.small_cross = pygame.transform.scale(self.cross, (35, 40))
 
         self.circle = pygame.image.load("circle.png")
         self.circle = pygame.transform.scale(self.circle, (150, 200))
-        
-        self.small_circle = pygame.image.load("circle.png")
-        self.small_circle = pygame.transform.scale(self.small_circle, (35, 40))
+
+        self.small_circle = pygame.transform.scale(self.circle, (35, 40))
         
         self.horiz_bar = pygame.image.load("horiz_bar.png")
         self.horiz_bar = pygame.transform.scale(self.horiz_bar, (474, 200))
         
+        self.small_horiz_bar = pygame.transform.scale(self.horiz_bar, (150, 40))
+        
         self.vert_bar = pygame.image.load("vert_bar.png")
-        self.vert_bar = pygame.transform.scale(self.vert_bar, (200, 474))
+        self.vert_bar = pygame.transform.scale(self.vert_bar, (200, 570))
         
         self.diag_right_bar = pygame.image.load("diag_right_bar.png")
-        self.diag_right_bar = pygame.transform.scale(self.diag_right_bar, (474, 474))
+        self.diag_right_bar = pygame.transform.scale(self.diag_right_bar, (474, 600))
         
         self.diag_left_bar = pygame.image.load("diag_left_bar.png")
-        self.diag_left_bar = pygame.transform.scale(self.diag_left_bar, (474, 474))
+        self.diag_left_bar = pygame.transform.scale(self.diag_left_bar, (474, 600))
 
         self.cell_rects = [
             pygame.Rect(0, 0, 150, 200),
@@ -182,21 +182,45 @@ class UltimateTicTacToe:
             ((0, 2), (1, 1), (2, 0)): "diag_right"
         }
         
+        self.winning_condition_small_board = {
+            ((0,0), (0,1), (0,2)),
+            ((1,0), (1,1), (1,2)),
+            ((2,0), (2,1), (2,2)),
+            ((0,0), (1,0), (2,0)),
+            ((0,1), (1,1), (2,1)),
+            ((0,2), (1,2), (2,2)),
+            ((0,0), (1,1), (2,2)),
+            ((0,2), (1,1), (2,0))
+        }
+        
         self.winning_bar = "empty"
         
         self.complete_bar_pos = None
 
         self.running = True
         self.turn = 0
+        
+        self.choice_case = -1
 
     def display(self):
         self.screen.blit(self.background, self.rect.topleft)
+        
+        for i, rect in enumerate(self.cell_rects):
+            for j, rect2 in enumerate(self.cells_rects[i]):
+                x, y = rect2.topleft
+                if self.game_small_boards_state[i][j // 3][j % 3] == 'X':
+                    self.screen.blit(self.small_cross, (x, y))
+                elif self.game_small_boards_state[i][j // 3][j % 3] == 'O':
+                    self.screen.blit(self.small_circle, (x, y))
 
         for i, rect in enumerate(self.cell_rects):
             x, y = rect.topleft
             if self.game_state[i // 3][i % 3] == 'X':
                 self.screen.blit(self.cross, (x, y))
             elif self.game_state[i // 3][i % 3] == 'O':
+                self.screen.blit(self.circle, (x, y))
+            elif self.game_state[i // 3][i % 3] == "Draw":
+                self.screen.blit(self.cross, (x, y))
                 self.screen.blit(self.circle, (x, y))
                 
         if self.complete_bar_pos is not None:
@@ -207,21 +231,21 @@ class UltimateTicTacToe:
     def display_complete_bar(self):
         if self.winning_bar != "empty":
             if self.winning_bar == "horiz_bar1" :
-                self.screen.blit(self.horiz_bar, (0, 130))
+                self.screen.blit(self.horiz_bar, (0, 45))
             elif self.winning_bar == "horiz_bar2" :
-                self.screen.blit(self.horiz_bar, (0, 290))
+                self.screen.blit(self.horiz_bar, (0, 210))
             elif self.winning_bar == "horiz_bar3" :
-                self.screen.blit(self.horiz_bar, (0, 440))
+                self.screen.blit(self.horiz_bar, (0, 390))
             elif self.winning_bar == "vert_bar1" :
-                self.screen.blit(self.vert_bar, (-20, 150))
+                self.screen.blit(self.vert_bar, (-5, 45))
             elif self.winning_bar == "vert_bar2" :
-                self.screen.blit(self.vert_bar, (140, 150))
+                self.screen.blit(self.vert_bar, (140, 45))
             elif self.winning_bar == "vert_bar3" :
-                self.screen.blit(self.vert_bar, (290, 150))
+                self.screen.blit(self.vert_bar, (280, 45))
             elif self.winning_bar == "diag_left" :
-                self.screen.blit(self.diag_left_bar, (0, 150))
+                self.screen.blit(self.diag_left_bar, (0, 30))
             elif self.winning_bar == "diag_right" :
-                self.screen.blit(self.diag_right_bar, (0, 150))
+                self.screen.blit(self.diag_right_bar, (0, 30))
 
     
     def display_result(self, result):
@@ -241,74 +265,100 @@ class UltimateTicTacToe:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if self.turn == 0:
-                    self.on_mouse_down()
+                # if self.turn == 0:
+                #     self.on_mouse_down()
+                self.on_mouse_down()
 
     def on_mouse_down(self):
         x, y = pygame.mouse.get_pos()
         print(x, y)
+        
         for i, rect in enumerate(self.cell_rects):
-            if rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_':
-                self.make_move(i)
-                self.make_computer_move()
-                return  
+            if rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_' and self.choice_case == -1:
+                for j, rect2 in enumerate(self.cells_rects[i]):
+                    if rect2.collidepoint(x, y) and self.game_small_boards_state[i][j // 3][j % 3] == '_':
+                        self.make_move(j, i)
+                        self.check_victory_small_board(self.game_small_boards_state[i])
+                        if self.game_state[j // 3][j % 3] != '_':
+                            self.choice_case = -1
+                        else:
+                            self.choice_case = j
+                        break
+                break
+            elif rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_' and self.choice_case == i:
+                for j, rect2 in enumerate(self.cells_rects[i]):
+                    if rect2.collidepoint(x, y) and self.game_small_boards_state[i][j // 3][j % 3] == '_':
+                        self.make_move(j, i)
+                        if self.game_state[j // 3][j % 3] != '_':
+                            self.choice_case = -1
+                        else:
+                            self.choice_case = j
+                        break
+                break
+        print(self.choice_case)        
 
-    def make_move(self, position):
+    def make_move(self, position, big_board):
         symbol = 'O' if self.turn == 1 else 'X'
-        self.game_state[position // 3][position % 3] = symbol
+        self.game_small_boards_state[big_board][position // 3][position % 3] = symbol
+        result = self.check_victory_small_board(self.game_small_boards_state[big_board])
+        if result != '_':
+            if result != "Draw":
+                self.game_state[big_board // 3][big_board % 3] = symbol
+            else:
+                self.game_state[big_board // 3][big_board % 3] = "Draw"
         self.turn = (self.turn + 1) % 2
         self.display_game_state()
         
-    def make_computer_move(self):
-        best_score = float('-inf')
-        best_action = None
+    # def make_computer_move(self):
+    #     best_score = float('-inf')
+    #     best_action = None
 
-        for i in range(9):
-            if self.game_state[i // 3][i % 3] == '_':
-                self.game_state[i // 3][i % 3] = 'O'
-                score = self.minimax(False)
-                self.game_state[i // 3][i % 3] = '_'
+    #     for i in range(9):
+    #         if self.game_state[i // 3][i % 3] == '_':
+    #             self.game_state[i // 3][i % 3] = 'O'
+    #             score = self.minimax(False)
+    #             self.game_state[i // 3][i % 3] = '_'
 
-                if score > best_score:
-                    best_score = score
-                    best_action = i
+    #             if score > best_score:
+    #                 best_score = score
+    #                 best_action = i
 
-        if best_action is not None:
-            self.make_move(best_action)
+    #     if best_action is not None:
+    #         self.make_move(best_action)
 
-    def evaluate(self):
-        result = self.check_victory()
-        if result == 'X':
-            return -1
-        elif result == 'O':
-            return 1
-        elif result == 'Draw':
-            return 0
-        else:
-            return None
+    # def evaluate(self):
+    #     result = self.check_victory()
+    #     if result == 'X':
+    #         return -1
+    #     elif result == 'O':
+    #         return 1
+    #     elif result == 'Draw':
+    #         return 0
+    #     else:
+    #         return None
 
-    def minimax(self, is_maximizing):
-        score = self.evaluate()
+    # def minimax(self, is_maximizing):
+    #     score = self.evaluate()
 
-        if score is not None:
-            return score
+    #     if score is not None:
+    #         return score
 
-        if is_maximizing:
-            best_score = float('-inf')
-            for i in range(9):
-                if self.game_state[i // 3][i % 3] == '_':
-                    self.game_state[i // 3][i % 3] = 'O'
-                    best_score = max(best_score, self.minimax(False))
-                    self.game_state[i // 3][i % 3] = '_'
-            return best_score
-        else:
-            best_score = float('inf')
-            for i in range(9):
-                if self.game_state[i // 3][i % 3] == '_':
-                    self.game_state[i // 3][i % 3] = 'X'
-                    best_score = min(best_score, self.minimax(True))
-                    self.game_state[i // 3][i % 3] = '_'
-            return best_score
+    #     if is_maximizing:
+    #         best_score = float('-inf')
+    #         for i in range(9):
+    #             if self.game_state[i // 3][i % 3] == '_':
+    #                 self.game_state[i // 3][i % 3] = 'O'
+    #                 best_score = max(best_score, self.minimax(False))
+    #                 self.game_state[i // 3][i % 3] = '_'
+    #         return best_score
+    #     else:
+    #         best_score = float('inf')
+    #         for i in range(9):
+    #             if self.game_state[i // 3][i % 3] == '_':
+    #                 self.game_state[i // 3][i % 3] = 'X'
+    #                 best_score = min(best_score, self.minimax(True))
+    #                 self.game_state[i // 3][i % 3] = '_'
+    #         return best_score
 
     def check_victory(self):
         for positions, bar_name in self.winning_conditions.items():
@@ -328,16 +378,15 @@ class UltimateTicTacToe:
         return '_'
 
     def check_victory_small_board(self, small_board):
-        for positions in self.winning_conditions.items():
+        for positions in self.winning_condition_small_board:
             if all(small_board[i][j] == 'O' for i, j in positions):
                 return 'O'
             elif all(small_board[i][j] == 'X' for i, j in positions):
                 return 'X'
-
+            
         if all(small_board[i][j] != '_' for i in range(3) for j in range(3)):
             return "Draw"
-
-        self.winning_bar = "empty"
+        
         return '_'
 
     def display_game_state(self):
@@ -346,7 +395,7 @@ class UltimateTicTacToe:
             
         print()
         
-    def run(self):
+    def run_without_computer(self):
         while self.running:
             self.events()
             result = self.check_victory()
@@ -370,7 +419,9 @@ class UltimateTicTacToe:
                             waiting = False
                 
                 self.__init__()
+    
+    def run_with_computer(self):
+        print("Computer")
+        self.run_without_computer()
                 
-        
-game = UltimateTicTacToe()
-game.run()
+    
