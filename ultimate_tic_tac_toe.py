@@ -287,6 +287,9 @@ class UltimateTicTacToe:
                             self.choice_case = -1
                         else:
                             self.choice_case = j
+                            
+                        if self.computer:
+                            self.make_computer_move()
                         break
                 break
             elif rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_' and self.choice_case == i:
@@ -297,6 +300,10 @@ class UltimateTicTacToe:
                             self.choice_case = -1
                         else:
                             self.choice_case = j
+                            
+                        if self.computer:
+                            self.display()
+                            self.make_computer_move()
                         break
                 break
         print(self.choice_case)        
@@ -318,52 +325,63 @@ class UltimateTicTacToe:
         best_action = None
 
         for i in range(9):
+            if self.choice_case != -1 and i != self.choice_case:
+                continue  # Skip small boards other than the designated one
+
             for j in range(9):
                 if self.game_small_boards_state[i][j // 3][j % 3] == '_':
                     self.game_small_boards_state[i][j // 3][j % 3] = 'O'
-                    score = self.minimax(False)
+                    score = self.minimax(self.game_small_boards_state[i], False)
                     self.game_small_boards_state[i][j // 3][j % 3] = '_'
 
                     if score > best_score:
                         best_score = score
                         best_action = (i, j)
-        
+
         if best_action is not None:
             self.make_move(best_action[1], best_action[0])
+            if self.game_state[best_action[1] // 3][best_action[1] % 3] != '_':
+                self.choice_case = -1
+            else:
+                self.choice_case = best_action[1] // 3 * 3 + best_action[1] % 3
+
+
             
 
-    def evaluate(self):
-        result = self.check_victory()
-        if result == 'X':
-            return -1
-        elif result == 'O':
+    def evaluate(self, small_board):
+        result = self.check_victory_small_board(small_board)
+        if result == 'O':
             return 1
+        elif result == 'X':
+            return -1
         elif result == 'Draw':
             return 0
         else:
             return None
 
-    def minimax(self, is_maximizing):
-        score = self.evaluate()
+    def minimax(self, small_board, is_maximizing):
+        score = self.evaluate(small_board)
 
         if score is not None:
             return score
 
         if is_maximizing:
             best_score = float('-inf')
-            for i in range(9):
-                if self.game_state[i // 3][i % 3] == '_':
-                    self.game_state[i // 3][i % 3] = 'O'
-                    best_score = max(best_score, self.minimax(False))
-                    self.game_state[i // 3][i % 3] = '_'
+            for i in range(3):
+                for j in range(3):
+                    if small_board[i][j] == '_':
+                        small_board[i][j] = 'O'
+                        best_score = max(best_score, self.minimax(small_board, False))
+                        small_board[i][j] = '_'
             return best_score
         else:
             best_score = float('inf')
-            for i in range(9):
-                if self.game_state[i // 3][i % 3] == '_':
-                    self.game_state[i // 3][i % 3] = 'X'
-                    best_score = min(best_score, self.minimax(True))
-                    self.game_state[i // 3][i % 3] = '_'
+            for i in range(3):
+                for j in range(3):
+                    if small_board[i][j] == '_':
+                        small_board[i][j] = 'X'
+                        best_score = min(best_score, self.minimax(small_board, True))
+                        small_board[i][j] = '_'
             return best_score
 
     def check_victory(self):
