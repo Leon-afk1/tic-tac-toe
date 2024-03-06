@@ -321,32 +321,16 @@ class UltimateTicTacToe:
         self.display_game_state()
         
     def make_computer_move(self):
-        best_score = float('-inf')
-        best_action = None
+        best_score, best_move = self.minimax(self.game_small_boards_state[self.choice_case], True, self.choice_case)
 
-        for i in range(9):
-            if self.choice_case != -1 and i != self.choice_case:
-                continue  # Skip small boards other than the designated one
+        if best_move is not None:
+            self.make_move(best_move[1], self.choice_case)
 
-            for j in range(9):
-                if self.game_small_boards_state[i][j // 3][j % 3] == '_':
-                    self.game_small_boards_state[i][j // 3][j % 3] = 'O'
-                    score = self.minimax(self.game_small_boards_state[i], False)
-                    self.game_small_boards_state[i][j // 3][j % 3] = '_'
+        if self.game_state[best_move[1] // 3][best_move[1] % 3] != '_':
+            self.choice_case = -1
+        else:
+            self.choice_case = best_move[1] // 3 * 3 + best_move[1] % 3
 
-                    if score > best_score:
-                        best_score = score
-                        best_action = (i, j)
-
-        if best_action is not None:
-            self.make_move(best_action[1], best_action[0])
-            if self.game_state[best_action[1] // 3][best_action[1] % 3] != '_':
-                self.choice_case = -1
-            else:
-                self.choice_case = best_action[1] // 3 * 3 + best_action[1] % 3
-
-
-            
 
     def evaluate(self, small_board):
         result = self.check_victory_small_board(small_board)
@@ -359,7 +343,7 @@ class UltimateTicTacToe:
         else:
             return None
 
-    def minimax(self, small_board, is_maximizing):
+    def minimax(self, small_board, is_maximizing, current_small_board_index):
         score = self.evaluate(small_board)
 
         if score is not None:
@@ -367,22 +351,46 @@ class UltimateTicTacToe:
 
         if is_maximizing:
             best_score = float('-inf')
+            best_move = None
             for i in range(3):
                 for j in range(3):
                     if small_board[i][j] == '_':
                         small_board[i][j] = 'O'
-                        best_score = max(best_score, self.minimax(small_board, False))
+                        current_score = self.minimax(small_board, False, current_small_board_index)
                         small_board[i][j] = '_'
-            return best_score
+
+                        if isinstance(current_score, tuple):
+                            current_score = current_score[0]
+
+                        if current_score > best_score:
+                            best_score = current_score
+                            best_move = (i, j)
+
+            if best_score == float('-inf'):
+                return None
+            return best_score, best_move
+
         else:
             best_score = float('inf')
+            best_move = None
             for i in range(3):
                 for j in range(3):
                     if small_board[i][j] == '_':
                         small_board[i][j] = 'X'
-                        best_score = min(best_score, self.minimax(small_board, True))
+                        current_score = self.minimax(small_board, True, current_small_board_index)
                         small_board[i][j] = '_'
-            return best_score
+
+                        if isinstance(current_score, tuple):
+                            current_score = current_score[0]
+
+                        if current_score < best_score:
+                            best_score = current_score
+                            best_move = (i, j)
+
+            if best_score == float('inf'):
+                return None
+            return best_score, best_move
+
 
     def check_victory(self):
         for positions, bar_name in self.winning_conditions.items():
@@ -451,14 +459,13 @@ class UltimateTicTacToe:
             result = self.check_victory()
             self.display()
 
-            
             if result != "_":
                 if result == "Draw":
                     print("Draw")
                 else:
                     print("Victory for", result)
                 self.display_result(result)
-                
+
                 waiting = True
                 while waiting:
                     for event in pygame.event.get():
@@ -467,7 +474,8 @@ class UltimateTicTacToe:
                             waiting = False
                         elif event.type == pygame.MOUSEBUTTONDOWN:
                             waiting = False
-                
+
                 self.__init__()
+
                 
     
