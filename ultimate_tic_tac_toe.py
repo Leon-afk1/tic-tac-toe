@@ -1,5 +1,6 @@
 import pygame
-
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
 class UltimateTicTacToe:
     def __init__(self):
@@ -289,7 +290,9 @@ class UltimateTicTacToe:
                             self.choice_case = j
                             
                         if self.computer:
-                            self.make_computer_move()
+                            if self.check_victory() == "_":
+                                self.display()
+                                self.make_computer_move()
                         break
                 break
             elif rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_' and self.choice_case == i:
@@ -302,8 +305,9 @@ class UltimateTicTacToe:
                             self.choice_case = j
                             
                         if self.computer:
-                            self.display()
-                            self.make_computer_move()
+                            if self.check_victory() == "_":
+                                self.display()
+                                self.make_computer_move()
                         break
                 break
         print(self.choice_case)        
