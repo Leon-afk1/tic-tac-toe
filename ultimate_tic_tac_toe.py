@@ -1,6 +1,6 @@
 import pygame
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+import tensorflow as tf
+from tensorflow.keras import layers, models
 
 class UltimateTicTacToe:
     def __init__(self):
@@ -204,6 +204,16 @@ class UltimateTicTacToe:
         self.turn = 0
         
         self.choice_case = -1
+        
+        model = models.Sequential([
+            layers.Flatten(input_shape=(27,)),   # Assuming 3x3x3 game board (27 cells)
+            layers.Dense(128, activation='relu'),
+            layers.Dense(64, activation='relu'),
+            layers.Dense(9, activation='softmax')  # Output layer with 9 neurons for each possible move
+        ])
+        
+        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
 
     def display(self):
         self.screen.blit(self.background, self.rect.topleft)
