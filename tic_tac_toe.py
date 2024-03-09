@@ -1,4 +1,12 @@
 import pygame
+import numpy as np
+import tensorflow as tf
+import random
+
+MAX_MEMORY = 100_000
+BATCH_SIZE = 1000
+LR = 0.001
+GAMMA = 0.9
 
 class TicTacToe:
     def __init__(self):
@@ -57,7 +65,27 @@ class TicTacToe:
         self.complete_bar_pos = None
 
         self.running = True
-        self.turn = 0
+        self.turn = random.choice([0, 1])
+        
+        self.prev_game_state = [['_' for _ in range(3)] for _ in range(3)]
+        self.prev_move = None
+        
+        try:
+            self.model = tf.keras.models.load_model('tic_tac_toe_model')
+        except (OSError, IOError):
+            print("Aucun modèle existant trouvé. Création d'un nouveau modèle.")
+            self.model = self.build_q_model()
+
+        self.memory = []
+    
+    def build_q_model(self):
+        model = tf.keras.Sequential([
+            tf.keras.layers.Flatten(input_shape=(3, 3)),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(9, activation='linear')  # Linear activation for Q-values
+        ])
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LR), loss='mse')  # Mean Squared Error loss
+        return model
 
     def display(self):
         self.screen.blit(self.background, self.rect.topleft)
@@ -105,10 +133,16 @@ class TicTacToe:
         rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
         self.screen.blit(text, rect.topleft)
         pygame.display.flip()
+        
+    def save_model(self):
+        self.model.save('tic_tac_toe_model')
+
 
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                # Sauvegarde du modèle
+                self.model.save('tic_tac_toe_model')
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if self.turn == 0:
@@ -119,7 +153,16 @@ class TicTacToe:
         for i, rect in enumerate(self.cell_rects):
             if rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_':
                 self.make_move(i)
-                self.make_computer_move()
+                if self.check_victory() == '_':
+                    self.make_computer_move()
+                    reward = self.evaluate()
+                    next_state = self.convert_state(self.game_state)
+                    state = self.convert_state(self.prev_game_state)
+                    
+                    self.remember(state, self.prev_move, reward, next_state, False)
+                    
+                    self.replay()
+
                 return  
 
     def make_move(self, position):
@@ -130,22 +173,49 @@ class TicTacToe:
         
 
     def make_computer_move(self):
-        best_score = float('-inf')
-        best_action = None
+        if np.random.rand() < 0.1:  # Exploration-exploitation trade-off
+            # Exploration: effectuer un mouvement aléatoire
+            available_moves = [i for i in range(9) if self.game_state[i // 3][i % 3] == '_']
+            selected_move = np.random.choice(available_moves)
+        else:
+            # Exploitation: choisir le mouvement avec la meilleure valeur Q
+            q_values = self.model.predict(np.array([self.convert_state(self.game_state)]))[0]
+            available_moves = [i for i in range(9) if self.game_state[i // 3][i % 3] == '_']
+            selected_move = available_moves[np.argmax([q_values[i] for i in available_moves])]
 
-        for i in range(9):
-            if self.game_state[i // 3][i % 3] == '_':
-                self.game_state[i // 3][i % 3] = 'O'
-                score = self.minimax(False)
-                self.game_state[i // 3][i % 3] = '_'
+        self.make_move(selected_move)
+        
+    def convert_state(self, state):
+        # Convertir l'état du jeu en format adapté pour le modèle
+        return np.array([[self.convert_symbol(s) for s in row] for row in state], dtype='float32')
+    
+    def remember(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+        if len(self.memory) > MAX_MEMORY:
+            del self.memory[0]
+            
+    def replay(self):
+        if len(self.memory) < BATCH_SIZE:
+            return
 
-                if score > best_score:
-                    best_score = score
-                    best_action = i
+        minibatch = np.random.choice(self.memory, BATCH_SIZE, replace=False)
+        for state, action, reward, next_state, done in minibatch:
+            target = reward
+            if not done:
+                target = reward + GAMMA * np.max(self.model.predict(np.array([next_state]))[0])
 
-        if best_action is not None:
-            self.make_move(best_action)
+            target_f = self.model.predict(np.array([state]))
+            target_f[0][action] = target
 
+            self.model.fit(np.array([state]), target_f, epochs=1, verbose=0)
+
+    def convert_symbol(self, symbol):
+        if symbol == 'X':
+            return 1.0
+        elif symbol == 'O':
+            return -1.0
+        else:
+            return 0.0
 
     def evaluate(self):
         result = self.check_victory()
@@ -157,30 +227,6 @@ class TicTacToe:
             return 0
         else:
             return None
-
-    
-    def minimax(self, is_maximizing):
-        score = self.evaluate()
-
-        if score is not None:
-            return score
-
-        if is_maximizing:
-            best_score = float('-inf')
-            for i in range(9):
-                if self.game_state[i // 3][i % 3] == '_':
-                    self.game_state[i // 3][i % 3] = 'O'
-                    best_score = max(best_score, self.minimax(False))
-                    self.game_state[i // 3][i % 3] = '_'
-            return best_score
-        else:
-            best_score = float('inf')
-            for i in range(9):
-                if self.game_state[i // 3][i % 3] == '_':
-                    self.game_state[i // 3][i % 3] = 'X'
-                    best_score = min(best_score, self.minimax(True))
-                    self.game_state[i // 3][i % 3] = '_'
-            return best_score
 
     def check_victory(self):
         for positions, bar_name in self.winning_conditions.items():
@@ -209,18 +255,29 @@ class TicTacToe:
 
     def run(self):
         while self.running:
+            if self.turn == 1:
+                self.make_computer_move()
+                reward = self.evaluate()
+                next_state = self.convert_state(self.game_state)
+                state = self.convert_state(self.prev_game_state)
+                
+                self.remember(state, self.prev_move, reward, next_state, False)
+                
+                self.replay()
             self.events()
             result = self.check_victory()
             self.display()
 
-            
             if result != "_":
                 if result == "Draw":
-                    print("Draw")
+                    print("Match nul")
                 else:
-                    print("Victory for", result)
+                    print("Victoire pour", result)
                 self.display_result(result)
-                
+
+                # Enregistrement du modèle à la fin de chaque jeu
+                self.model.save('tic_tac_toe_model')
+
                 waiting = True
                 while waiting:
                     for event in pygame.event.get():
@@ -229,7 +286,7 @@ class TicTacToe:
                             waiting = False
                         elif event.type == pygame.MOUSEBUTTONDOWN:
                             waiting = False
-                
+
                 self.__init__()
                 
         
