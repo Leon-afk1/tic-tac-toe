@@ -77,15 +77,17 @@ class TicTacToe:
             self.model = self.build_q_model()
 
         self.memory = []
+
     
     def build_q_model(self):
         model = tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=(3, 3)),
             tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(9, activation='linear')  # Linear activation for Q-values
+            tf.keras.layers.Dense(9, activation='linear', kernel_initializer='random_uniform')  # Initialize Q-values
         ])
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LR), loss='mse')  # Mean Squared Error loss
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LR), loss='mse')
         return model
+
 
     def display(self):
         self.screen.blit(self.background, self.rect.topleft)
@@ -125,7 +127,8 @@ class TicTacToe:
     def display_result(self, result):
         phrase = "Victory for " + result if result != "Draw" else "Draw"
         
-        pygame.time.wait(2000)
+        
+        pygame.time.wait(500)
         self.screen.fill(self.background_colour)
         
         font = pygame.font.Font(None, 36)
@@ -169,7 +172,6 @@ class TicTacToe:
         symbol = 'O' if self.turn == 1 else 'X'
         self.game_state[position // 3][position % 3] = symbol
         self.turn = (self.turn + 1) % 2
-        self.display_game_state()
         
 
     def make_computer_move(self):
@@ -220,13 +222,14 @@ class TicTacToe:
     def evaluate(self):
         result = self.check_victory()
         if result == 'X':
-            return -1
+            return -1 if self.turn == 0 else 1
         elif result == 'O':
-            return 1
+            return -1 if self.turn == 1 else 1
         elif result == 'Draw':
             return 0
         else:
             return None
+
 
     def check_victory(self):
         for positions, bar_name in self.winning_conditions.items():
@@ -244,16 +247,12 @@ class TicTacToe:
 
         self.winning_bar = "empty"
         return '_'
-
-    
-    def display_game_state(self):
-        for i in range(3):
-            print(self.game_state[i])
-            
-        print()
             
 
     def run(self):
+        win = 0
+        lose = 0
+        draw = 0
         while self.running:
             if self.turn == 1:
                 self.make_computer_move()
@@ -269,11 +268,16 @@ class TicTacToe:
             self.display()
 
             if result != "_":
-                if result == "Draw":
-                    print("Match nul")
-                else:
-                    print("Victoire pour", result)
                 self.display_result(result)
+                
+                if result == "X":
+                    lose += 1
+                elif result == "O":
+                    win += 1
+                else:
+                    draw += 1
+                    
+                print(f"Win: {win}, Lose: {lose}, Draw: {draw}")
 
                 # Enregistrement du modèle à la fin de chaque jeu
                 self.model.save('tic_tac_toe_model')
@@ -286,6 +290,51 @@ class TicTacToe:
                             waiting = False
                         elif event.type == pygame.MOUSEBUTTONDOWN:
                             waiting = False
+
+                self.__init__()
+                
+    def run_computer_vs_computer(self):
+        win = 0
+        lose = 0
+        draw = 0
+        while self.running:
+            if pygame.event.get(pygame.QUIT):
+                self.running = False
+            if self.turn == 1:
+                self.make_computer_move()
+                reward = self.evaluate()
+                next_state = self.convert_state(self.game_state)
+                state = self.convert_state(self.prev_game_state)
+                
+                self.remember(state, self.prev_move, reward, next_state, False)
+                
+                self.replay()
+            else:
+                self.make_computer_move()
+                reward = self.evaluate()
+                next_state = self.convert_state(self.game_state)
+                state = self.convert_state(self.prev_game_state)
+                
+                self.remember(state, self.prev_move, reward, next_state, False)
+                
+                self.replay()
+            result = self.check_victory()
+            self.display()
+
+            if result != "_":
+                # self.display_result(result)
+                
+                if result == "X":
+                    lose += 1
+                elif result == "O":
+                    win += 1
+                else:
+                    draw += 1
+                    
+                print(f"Win: {win}, Lose: {lose}, Draw: {draw}")
+
+                self.model.save('tic_tac_toe_model')
+
 
                 self.__init__()
                 

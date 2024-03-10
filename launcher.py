@@ -27,7 +27,7 @@ class Launcher:
                 if self.text_rect.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.tic_tac_toe = TicTacToe()
-                    self.tic_tac_toe.run()
+                    self.tic_tac_toe.run_computer_vs_computer()
                 if self.text_rect2.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.choice_ultimate()
