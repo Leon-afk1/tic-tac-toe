@@ -150,6 +150,32 @@ class TicTacToe:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if self.turn == 0:
                     self.on_mouse_down()
+                    
+    def events_without_computer(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                for i, rect in enumerate(self.cell_rects):
+                    if rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_':
+                        self.make_move(i)
+                        return
+                    
+    def events_with_min_max(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if self.turn == 0:
+                    x, y = pygame.mouse.get_pos()
+                    for i, rect in enumerate(self.cell_rects):
+                        if rect.collidepoint(x, y) and self.game_state[i // 3][i % 3] == '_':
+                            self.make_move(i)
+                            
+                    if self.check_victory() == '_':
+                        self.make_computer_move_min_max()
+                    return
 
     def on_mouse_down(self):
         x, y = pygame.mouse.get_pos()
@@ -187,6 +213,24 @@ class TicTacToe:
 
         self.make_move(selected_move)
         
+    def make_computer_move_min_max(self):
+        best_score = float('-inf')
+        best_action = None
+
+        for i in range(9):
+            if self.game_state[i // 3][i % 3] == '_':
+                self.game_state[i // 3][i % 3] = 'O'
+                score = self.minimax(False)
+                self.game_state[i // 3][i % 3] = '_'
+
+                if score > best_score:
+                    best_score = score
+                    best_action = i
+
+        if best_action is not None:
+            self.make_move(best_action)
+
+        
     def convert_state(self, state):
         # Convertir l'état du jeu en format adapté pour le modèle
         return np.array([[self.convert_symbol(s) for s in row] for row in state], dtype='float32')
@@ -222,14 +266,47 @@ class TicTacToe:
     def evaluate(self):
         result = self.check_victory()
         if result == 'X':
-            return -1 if self.turn == 0 else 1
+            return  1
         elif result == 'O':
-            return -1 if self.turn == 1 else 1
+            return -1 
         elif result == 'Draw':
             return 0
         else:
             return None
+        
+    def evaluate_min_max(self):
+        result = self.check_victory()
+        if result == 'X':
+            return -1
+        elif result == 'O':
+            return 1
+        elif result == 'Draw':
+            return 0
+        else:
+            return None
+        
+    def minimax(self, is_maximizing):
+        score = self.evaluate()
 
+        if score is not None:
+            return score
+
+        if is_maximizing:
+            best_score = float('-inf')
+            for i in range(9):
+                if self.game_state[i // 3][i % 3] == '_':
+                    self.game_state[i // 3][i % 3] = 'O'
+                    best_score = max(best_score, self.minimax(False))
+                    self.game_state[i // 3][i % 3] = '_'
+            return best_score
+        else:
+            best_score = float('inf')
+            for i in range(9):
+                if self.game_state[i // 3][i % 3] == '_':
+                    self.game_state[i // 3][i % 3] = 'X'
+                    best_score = min(best_score, self.minimax(True))
+                    self.game_state[i // 3][i % 3] = '_'
+            return best_score
 
     def check_victory(self):
         for positions, bar_name in self.winning_conditions.items():
@@ -249,7 +326,7 @@ class TicTacToe:
         return '_'
             
 
-    def run(self):
+    def run_with_neural_network(self):
         win = 0
         lose = 0
         draw = 0
@@ -310,8 +387,8 @@ class TicTacToe:
                 
                 self.replay()
             else:
-                self.make_computer_move()
-                reward = self.evaluate()
+                self.make_computer_move_min_max()
+                reward = self.evaluate_min_max()
                 next_state = self.convert_state(self.game_state)
                 state = self.convert_state(self.prev_game_state)
                 
@@ -338,7 +415,46 @@ class TicTacToe:
 
                 self.__init__()
                 
+    def run_without_computer(self):
+        while self.running:
+            self.events_without_computer()
+            result = self.check_victory()
+            self.display()
+
+            if result != "_":
+                self.display_result(result)
+                
+                waiting = True
+                while waiting:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            self.running = False
+                            waiting = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            waiting = False
+
+                self.__init__()
         
+    def run_with_min_max(self):
+        while self.running:
+            if self.turn == 1:
+                self.make_computer_move_min_max()
+            result = self.check_victory()
+            self.display()
+
+            if result != "_":
+                self.display_result(result)
+                
+                waiting = True
+                while waiting:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            self.running = False
+                            waiting = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            waiting = False
+
+                self.__init__()
         
 
 
