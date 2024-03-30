@@ -77,6 +77,10 @@ class TicTacToe:
         self.prev_move = None
         
         self.computer=0
+        
+        self.model = self.build_q_model()
+        
+        self.memory = []
 
     def build_q_model(self):
         model = tf.keras.Sequential([
@@ -85,10 +89,12 @@ class TicTacToe:
             tf.keras.layers.Dense(9, activation='linear', kernel_initializer='random_uniform')  
         ])
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LR), loss='mse')
+        self.model = model  # Store the model in class attribute
         return model
-    
+
     def save_model(self):
-        self.model.save('tic_tac_toe_model')
+        self.model.save('tic_tac_toe_model.keras')
+
 
     def display(self):
         self.screen.blit(self.background, self.rect.topleft)
@@ -126,16 +132,22 @@ class TicTacToe:
 
     def display_result(self, result):
         phrase = "Victory for " + result if result != "Draw" else "Draw"
-        
-        
         pygame.time.wait(500)
         self.screen.fill(self.background_colour)
-        
         font = pygame.font.Font(None, 36)
         text = font.render(phrase, True, (0, 0, 0))
         rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
         self.screen.blit(text, rect.topleft)
         pygame.display.flip()
+        # Wait for user input
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    waiting = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    waiting = False
 
     def events(self):
         for event in pygame.event.get():
@@ -168,7 +180,7 @@ class TicTacToe:
                                 self.make_move(i)
                                 
                         if self.check_victory() == '_':
-                            self.make_computer_move_neural_network()
+                            self.make_computer_move()
                             reward = self.evaluate()
                             next_state = self.convert_state(self.game_state)
                             state = self.convert_state(self.prev_game_state)
@@ -254,17 +266,6 @@ class TicTacToe:
         else:
             return None
 
-    def evaluate_min_max(self):
-        result = self.check_victory()
-        if result == 'X':
-            return -1
-        elif result == 'O':
-            return 1
-        elif result == 'Draw':
-            return 0
-        else:
-            return None
-
     def minimax(self, is_maximizing):
         score = self.evaluate()
 
@@ -287,7 +288,8 @@ class TicTacToe:
                     best_score = min(best_score, self.minimax(True))
                     self.game_state[i // 3][i % 3] = '_'
             return best_score
-        
+
+
     def check_victory(self):
         for positions, bar_name in self.winning_conditions.items():
             if all(self.game_state[i][j] == 'O' for i, j in positions):
@@ -309,7 +311,7 @@ class TicTacToe:
         self.computer=computer_val
         if self.computer==0:
             while self.running: # Human vs Human
-                self.events_without_computer()
+                self.events()
                 result = self.check_victory()
                 self.display()
 
@@ -331,7 +333,7 @@ class TicTacToe:
             while self.running:
                 if self.turn == 1:
                     self.make_computer_move_min_max()
-                self.events_with_min_max()
+                self.events()
                 result = self.check_victory()
                 self.display()
 
@@ -410,7 +412,7 @@ class TicTacToe:
                     self.replay()
                 else:
                     self.make_computer_move_min_max()
-                    reward = self.evaluate_min_max()
+                    reward = self.evaluate()
                     next_state = self.convert_state(self.game_state)
                     state = self.convert_state(self.prev_game_state)
                     
@@ -432,8 +434,7 @@ class TicTacToe:
                         
                     print(f"Win: {win}, Lose: {lose}, Draw: {draw}")
 
-                    self.model.save('tic_tac_toe_model')
-
+                    self.save_model()
 
                     self.__init__()
             

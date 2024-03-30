@@ -81,19 +81,19 @@ class Launcher:
                 if self.answer1_rect.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.tic_tac_toe = TicTacToe()
-                    self.tic_tac_toe.run_without_computer()
+                    self.tic_tac_toe.run(0)
                 if self.answer2_rect.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.tic_tac_toe = TicTacToe()
-                    self.tic_tac_toe.run_with_min_max()
+                    self.tic_tac_toe.run(1)
                 if self.answer3_rect.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.tic_tac_toe = TicTacToe()
-                    self.tic_tac_toe.run_with_neural_network()
+                    self.tic_tac_toe.run(2)
                 if self.answer4_rect.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.tic_tac_toe = TicTacToe()
-                    self.tic_tac_toe.run_computer_vs_computer()
+                    self.tic_tac_toe.run(3)
                 if self.back_rect.collidepoint(event.pos):
                     self.screen.fill(self.background_colour)
                     self.run()       
